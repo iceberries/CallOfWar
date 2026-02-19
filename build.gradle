@@ -147,6 +147,17 @@ dependencies {
 
     // 官方Maven (4.8.3)
     implementation "software.bernie.geckolib:geckolib-neoforge-1.21.1:4.8.3"
+    // FTB Teams 依赖
+    implementation "curse.maven:ftb-teams-${ftb_teams_project_id}:${ftb_teams_file_id}"
+    // FTB Library 依赖
+    implementation "curse.maven:ftb-library-${ftb_library_project_id}:${ftb_library_file_id}"
+    // Architectury API 依赖
+    implementation "curse.maven:architectury-api-${architectury_api_project_id}:${architectury_api_file_id}"
+    // V Mod 依赖 (需要从 CurseForge 页面获取正确的ID)
+    // 模组名称: 未知，用户请求添加 "[NeoForge 1.21(.1)] v13.0.8"
+    // 项目ID: 需要从 CurseForge 页面查找
+    // 文件ID: 需要从文件下载页面查找 (对于版本 v13.0.8)
+    // implementation "curse.maven:v-mod-${v_mod_project_id}:${v_mod_file_id}"
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.
