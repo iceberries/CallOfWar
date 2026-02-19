@@ -1,0 +1,13 @@
+{
+  "itemGroup.callofwar": "Example Mod Tab",
+  "block.callofwar.example_block": "Example Block",
+  "item.callofwar.example_item": "Example Item",
+
+  "callofwar.configuration.title": "CallOfWar Configs",
+  "callofwar.configuration.section.callofwar.common.toml": "CallOfWar Configs",
+  "callofwar.configuration.section.callofwar.common.toml.title": "CallOfWar Configs",
+  "callofwar.configuration.items": "Item List",
+  "callofwar.configuration.logDirtBlock": "Log Dirt Block",
+  "callofwar.configuration.magicNumberIntroduction": "Magic Number Text",
+  "callofwar.configuration.magicNumber": "Magic Number"
+}
