@@ -24,3 +24,10 @@ runs
 run-data
 
 repo
+
+# vscode
+.vscode/
+.history/
+
+# github (如不需要追踪则保留，需要 Actions 则删除)
+.github/
