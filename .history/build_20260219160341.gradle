@@ -147,6 +147,9 @@ dependencies {
 
     // 官方Maven (4.8.3)
     implementation "software.bernie.geckolib:geckolib-neoforge-1.21.1:4.8.3"
+    jarJar(implementation(group: "com.github.CTNStudio", name: "Ctn-Api")) {
+    version { prefer ctn_api_version }
+    }
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.
