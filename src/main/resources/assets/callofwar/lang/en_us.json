@@ -1,7 +1,11 @@
 {
-  "itemGroup.callofwar": "Example Mod Tab",
+  "itemGroup.callofwar": "Call of War",
   "block.callofwar.example_block": "Example Block",
   "item.callofwar.example_item": "Example Item",
+
+  "block.callofwar.speed_banner": "Speed Banner",
+  "block.callofwar.strength_banner": "Strength Banner",
+  "block.callofwar.resistance_banner": "Resistance Banner",
 
   "callofwar.configuration.title": "CallOfWar Configs",
   "callofwar.configuration.section.callofwar.common.toml": "CallOfWar Configs",

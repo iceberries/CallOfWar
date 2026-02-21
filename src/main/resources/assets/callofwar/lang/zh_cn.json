@@ -1,0 +1,17 @@
+{
+  "itemGroup.callofwar": "战争号角",
+  "block.callofwar.example_block": "示例方块",
+  "item.callofwar.example_item": "示例物品",
+
+  "block.callofwar.speed_banner": "速度战旗",
+  "block.callofwar.strength_banner": "力量战旗",
+  "block.callofwar.resistance_banner": "抗性战旗",
+
+  "callofwar.configuration.title": "战争号角配置",
+  "callofwar.configuration.section.callofwar.common.toml": "战争号角配置",
+  "callofwar.configuration.section.callofwar.common.toml.title": "战争号角配置",
+  "callofwar.configuration.items": "物品列表",
+  "callofwar.configuration.logDirtBlock": "记录泥土方块",
+  "callofwar.configuration.magicNumberIntroduction": "魔法数字文本",
+  "callofwar.configuration.magicNumber": "魔法数字"
+}
