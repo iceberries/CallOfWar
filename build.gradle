@@ -76,6 +76,14 @@ neoForge {
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
 
+        // 第二个客户端实例用于多人测试
+        client2 {
+            client()
+            programArguments.addAll '--username', 'DevPlayer2'
+            gameDirectory = file('run2')
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
         server {
             server()
             programArgument '--nogui'

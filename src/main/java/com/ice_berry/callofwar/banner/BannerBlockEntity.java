@@ -1,12 +1,16 @@
 package com.ice_berry.callofwar.banner;
 
 import java.util.List;
+import java.util.UUID;
+
+import com.ice_berry.callofwar.CallOfWar;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -21,6 +25,7 @@ public class BannerBlockEntity extends BlockEntity {
 
     private int tickCounter = 0;
     private BannerType cachedBannerType;
+    private UUID teamId;  // FTB Teams 团队ID
 
     public BannerBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -41,6 +46,34 @@ public class BannerBlockEntity extends BlockEntity {
             cachedBannerType = bannerBlock.getBannerType();
         }
         return cachedBannerType;
+    }
+
+    /**
+     * 设置放置者并记录其团队ID
+     */
+    public void setPlacer(LivingEntity placer) {
+        if (placer instanceof Player player) {
+            this.teamId = TeamHelper.getFTBTeamId(player).orElse(null);
+            CallOfWar.LOGGER.info("Banner placed by player {}, teamId: {}", player.getName().getString(), teamId);
+        } else {
+            this.teamId = null;
+        }
+        this.setChanged();
+    }
+
+    /**
+     * 直接设置团队ID
+     */
+    public void setTeamId(UUID teamId) {
+        this.teamId = teamId;
+        this.setChanged();
+    }
+
+    /**
+     * 获取团队ID
+     */
+    public UUID getTeamId() {
+        return teamId;
     }
 
     /**
@@ -85,9 +118,30 @@ public class BannerBlockEntity extends BlockEntity {
                 continue;
             }
 
-            if (behavior.shouldAffectEntity(level, pos, entity, bannerType)) {
-                applyEffects(entity, behavior.getEffects());
+            // 团队检查逻辑
+            if (bannerType.isTeamRestricted()) {
+                // 如果没有记录团队ID，不给任何人生效
+                if (teamId == null) {
+                    CallOfWar.LOGGER.debug("Team-restricted banner has no teamId, skipping entity: {}", 
+                        entity.getName().getString());
+                    continue;
+                }
+
+                // 检查实体是否属于该团队
+                if (entity instanceof Player player) {
+                    boolean inTeam = TeamHelper.isPlayerInTeam(player, teamId);
+                    CallOfWar.LOGGER.debug("Player {} in team check: {} (banner teamId: {})", 
+                        player.getName().getString(), inTeam, teamId);
+                    if (!inTeam) {
+                        continue;
+                    }
+                } else {
+                    // 非玩家实体不享受团队限制战旗效果
+                    continue;
+                }
             }
+
+            applyEffects(entity, behavior.getEffects());
         }
     }
 
@@ -111,12 +165,18 @@ public class BannerBlockEntity extends BlockEntity {
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
         tag.putInt("TickCounter", tickCounter);
+        if (teamId != null) {
+            tag.putUUID("TeamId", teamId);
+        }
     }
 
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
         tickCounter = tag.getInt("TickCounter");
+        if (tag.hasUUID("TeamId")) {
+            teamId = tag.getUUID("TeamId");
+        }
     }
 
     @Override

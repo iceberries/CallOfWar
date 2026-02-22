@@ -1,14 +1,22 @@
 package com.ice_berry.callofwar.banner;
 
+import java.util.Optional;
+import java.util.UUID;
+
 import javax.annotation.Nullable;
 
+import com.ice_berry.callofwar.CallOfWar;
+
+import dev.ftb.mods.ftbteams.api.FTBTeamsAPI;
+import dev.ftb.mods.ftbteams.api.Team;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 
 /**
  * 队伍辅助类
- * 用于处理同队检测，预留FTP队伍系统集成接口
+ * 整合原版队伍系统和FTB Teams
  */
 public class TeamHelper {
 
@@ -24,54 +32,121 @@ public class TeamHelper {
             return false;
         }
 
-        // 使用原版队伍系统作为基础
+        // 优先检查原版队伍系统
         if (entity1.getTeam() != null && entity2.getTeam() != null) {
             return entity1.getTeam().isAlliedTo(entity2.getTeam());
         }
 
-        // 如果是玩家，检查FTP队伍
+        // 检查FTB Teams
         if (entity1 instanceof Player player1 && entity2 instanceof Player player2) {
-            return isSameFTPTeam(level, player1, player2);
+            return isSameFTBTeam(player1, player2);
         }
 
         return false;
     }
 
     /**
-     * 检查两个玩家是否在同一FTP队伍
-     * TODO: 与FTP队伍系统集成
+     * 检查玩家是否属于指定团队ID
+     * @param player 玩家
+     * @param teamId 团队ID
+     * @return 是否属于该团队
      */
-    public static boolean isSameFTPTeam(Level level, Player player1, Player player2) {
-        // 预留FTP队伍系统集成接口
-        // 示例实现（需要实际FTP API）:
-        // return FTPTeamAPI.isSameTeam(player1.getUUID(), player2.getUUID());
+    public static boolean isPlayerInTeam(Player player, @Nullable UUID teamId) {
+        if (teamId == null || player == null) {
+            return false;
+        }
+
+        Optional<UUID> playerTeamId = getFTBTeamId(player);
+        boolean result = playerTeamId.map(id -> id.equals(teamId)).orElse(false);
         
-        // 暂时返回false，等待FTP集成
+        CallOfWar.LOGGER.debug("isPlayerInTeam check: player={}, playerTeamId={}, bannerTeamId={}, result={}", 
+            player.getName().getString(), playerTeamId.orElse(null), teamId, result);
+        
+        return result;
+    }
+
+    /**
+     * 获取玩家的FTB Teams团队ID
+     * @param player 玩家
+     * @return 团队ID，如果玩家没有团队则返回空
+     */
+    public static Optional<UUID> getFTBTeamId(Player player) {
+        if (player == null) {
+            return Optional.empty();
+        }
+
+        // 只有服务端玩家才能查询FTB Teams
+        if (!(player instanceof ServerPlayer serverPlayer)) {
+            CallOfWar.LOGGER.debug("Player {} is not a ServerPlayer, cannot get FTB team", 
+                player.getName().getString());
+            return Optional.empty();
+        }
+
+        try {
+            Optional<Team> team = FTBTeamsAPI.api().getManager().getTeamForPlayer(serverPlayer);
+            if (team.isPresent()) {
+                UUID teamId = team.get().getId();
+                CallOfWar.LOGGER.debug("Player {} has FTB team: {} ({})", 
+                    player.getName().getString(), team.get().getName().getString(), teamId);
+                return Optional.of(teamId);
+            } else {
+                CallOfWar.LOGGER.debug("Player {} has no FTB team", player.getName().getString());
+                return Optional.empty();
+            }
+        } catch (Exception e) {
+            CallOfWar.LOGGER.error("Error getting FTB team for player {}: {}", 
+                player.getName().getString(), e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * 检查两个玩家是否在同一FTB队伍
+     */
+    public static boolean isSameFTBTeam(Player player1, Player player2) {
+        Optional<UUID> team1 = getFTBTeamId(player1);
+        Optional<UUID> team2 = getFTBTeamId(player2);
+
+        // 如果两个玩家都有团队，比较团队ID
+        if (team1.isPresent() && team2.isPresent()) {
+            return team1.get().equals(team2.get());
+        }
+        // 如果两个玩家都没有团队，返回false
         return false;
     }
 
     /**
-     * 获取玩家所在的FTP队伍名称
-     * TODO: 与FTP队伍系统集成
+     * 获取玩家所在的FTB队伍名称
      */
     @Nullable
-    public static String getFTPTeamName(Player player) {
-        // 预留FTP队伍系统集成接口
-        // 示例实现（需要实际FTP API）:
-        // return FTPTeamAPI.getTeamName(player.getUUID());
-        
-        return null;
+    public static String getFTBTeamName(Player player) {
+        if (!(player instanceof ServerPlayer serverPlayer)) {
+            return null;
+        }
+        try {
+            return FTBTeamsAPI.api().getManager().getTeamForPlayer(serverPlayer)
+                .map(team -> team.getName().getString())
+                .orElse(null);
+        } catch (Exception e) {
+            CallOfWar.LOGGER.error("Error getting FTB team name for player {}: {}", 
+                player.getName().getString(), e.getMessage());
+            return null;
+        }
     }
 
     /**
-     * 检查玩家是否在FTP队伍中
-     * TODO: 与FTP队伍系统集成
+     * 检查玩家是否在FTB队伍中
      */
-    public static boolean isInFTPTeam(Player player) {
-        // 预留FTP队伍系统集成接口
-        // 示例实现（需要实际FTP API）:
-        // return FTPTeamAPI.isInTeam(player.getUUID());
-        
-        return false;
+    public static boolean isInFTBTeam(Player player) {
+        if (!(player instanceof ServerPlayer serverPlayer)) {
+            return false;
+        }
+        try {
+            return FTBTeamsAPI.api().getManager().getTeamForPlayer(serverPlayer).isPresent();
+        } catch (Exception e) {
+            CallOfWar.LOGGER.error("Error checking if player {} is in FTB team: {}", 
+                player.getName().getString(), e.getMessage());
+            return false;
+        }
     }
 }
