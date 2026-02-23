@@ -6,6 +6,7 @@
   "block.callofwar.speed_banner": "Speed Banner",
   "block.callofwar.strength_banner": "Strength Banner",
   "block.callofwar.resistance_banner": "Resistance Banner",
+  "block.callofwar.banner": "Banner",
 
   "callofwar.configuration.title": "CallOfWar Configs",
   "callofwar.configuration.section.callofwar.common.toml": "CallOfWar Configs",
@@ -13,5 +14,15 @@
   "callofwar.configuration.items": "Item List",
   "callofwar.configuration.logDirtBlock": "Log Dirt Block",
   "callofwar.configuration.magicNumberIntroduction": "Magic Number Text",
-  "callofwar.configuration.magicNumber": "Magic Number"
+  "callofwar.configuration.magicNumber": "Magic Number",
+
+  "gui.callofwar.banner.confirm": "Confirm",
+  "gui.callofwar.banner.filter_mode": "Filter Mode",
+  "gui.callofwar.banner.team": "Team: %s",
+  
+  "gui.callofwar.banner.filter.team_only": "Team Only",
+  "gui.callofwar.banner.filter.team_allies": "Team & Allies",
+  "gui.callofwar.banner.filter.all_players": "All Players",
+  "gui.callofwar.banner.filter.all_entities": "All Entities",
+  "gui.callofwar.banner.filter.enemies_only": "Enemies Only"
 }

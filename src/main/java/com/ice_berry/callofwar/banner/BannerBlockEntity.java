@@ -1,9 +1,13 @@
 package com.ice_berry.callofwar.banner;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import com.ice_berry.callofwar.CallOfWar;
+import com.ice_berry.callofwar.banner.team.ITeamService;
+import com.ice_berry.callofwar.banner.team.TargetFilterMode;
+import com.ice_berry.callofwar.banner.team.TeamServiceManager;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -25,7 +29,9 @@ public class BannerBlockEntity extends BlockEntity {
 
     private int tickCounter = 0;
     private BannerType cachedBannerType;
-    private UUID teamId;  // FTB Teams 团队ID
+    private UUID placerUUID;  // 放置者UUID（用于GUI权限检查）
+    private UUID teamId;  // 团队ID
+    private TargetFilterMode filterMode;  // 目标筛选模式（可配置）
 
     public BannerBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -41,7 +47,7 @@ public class BannerBlockEntity extends BlockEntity {
     /**
      * 获取战旗类型
      */
-    protected BannerType getBannerType() {
+    public BannerType getBannerType() {
         if (cachedBannerType == null && getBlockState().getBlock() instanceof COWAbstractBannerBlock bannerBlock) {
             cachedBannerType = bannerBlock.getBannerType();
         }
@@ -49,16 +55,64 @@ public class BannerBlockEntity extends BlockEntity {
     }
 
     /**
-     * 设置放置者并记录其团队ID
+     * 获取团队服务
+     */
+    public ITeamService getTeamService() {
+        return TeamServiceManager.getInstance().getActiveService();
+    }
+
+    /**
+     * 获取目标筛选模式
+     * 如果未配置，使用 BannerType 中的默认值
+     */
+    public TargetFilterMode getFilterMode() {
+        if (filterMode == null) {
+            BannerType type = getBannerType();
+            if (type != null) {
+                return type.getBehavior().getTargetFilterMode();
+            }
+            return TargetFilterMode.TEAM_ONLY;
+        }
+        return filterMode;
+    }
+
+    /**
+     * 设置目标筛选模式
+     */
+    public void setFilterMode(TargetFilterMode mode) {
+        this.filterMode = mode;
+        this.setChanged();
+    }
+
+    /**
+     * 设置放置者并记录其UUID和团队ID
      */
     public void setPlacer(LivingEntity placer) {
         if (placer instanceof Player player) {
-            this.teamId = TeamHelper.getFTBTeamId(player).orElse(null);
-            CallOfWar.LOGGER.info("Banner placed by player {}, teamId: {}", player.getName().getString(), teamId);
+            this.placerUUID = player.getUUID();
+            ITeamService teamService = getTeamService();
+            this.teamId = teamService.getTeamId(player).orElse(null);
+            CallOfWar.LOGGER.info("Banner placed by player {}, placerUUID: {}, teamId: {}, teamService: {}", 
+                player.getName().getString(), placerUUID, teamId, teamService.getName());
         } else {
+            this.placerUUID = null;
             this.teamId = null;
         }
         this.setChanged();
+    }
+
+    /**
+     * 获取放置者UUID
+     */
+    public UUID getPlacerUUID() {
+        return placerUUID;
+    }
+
+    /**
+     * 检查玩家是否是放置者
+     */
+    public boolean isPlacer(Player player) {
+        return placerUUID != null && placerUUID.equals(player.getUUID());
     }
 
     /**
@@ -74,6 +128,16 @@ public class BannerBlockEntity extends BlockEntity {
      */
     public UUID getTeamId() {
         return teamId;
+    }
+
+    /**
+     * 获取团队名称
+     */
+    public String getTeamName() {
+        if (teamId == null) {
+            return "No Team";
+        }
+        return getTeamService().getTeamName(teamId).orElse("Unknown Team");
     }
 
     /**
@@ -105,6 +169,8 @@ public class BannerBlockEntity extends BlockEntity {
     protected void applyEffectsToNearbyEntities(Level level, BlockPos pos, BannerType bannerType) {
         IBannerBehavior behavior = bannerType.getBehavior();
         double radius = behavior.getRadius();
+        TargetFilterMode mode = getFilterMode();  // 使用可配置的模式
+        ITeamService teamService = getTeamService();
 
         AABB searchBox = new AABB(
             pos.getX() - radius, pos.getY() - radius, pos.getZ() - radius,
@@ -118,31 +184,74 @@ public class BannerBlockEntity extends BlockEntity {
                 continue;
             }
 
-            // 团队检查逻辑
-            if (bannerType.isTeamRestricted()) {
-                // 如果没有记录团队ID，不给任何人生效
-                if (teamId == null) {
-                    CallOfWar.LOGGER.debug("Team-restricted banner has no teamId, skipping entity: {}", 
-                        entity.getName().getString());
-                    continue;
-                }
-
-                // 检查实体是否属于该团队
-                if (entity instanceof Player player) {
-                    boolean inTeam = TeamHelper.isPlayerInTeam(player, teamId);
-                    CallOfWar.LOGGER.debug("Player {} in team check: {} (banner teamId: {})", 
-                        player.getName().getString(), inTeam, teamId);
-                    if (!inTeam) {
-                        continue;
-                    }
-                } else {
-                    // 非玩家实体不享受团队限制战旗效果
-                    continue;
-                }
+            // 使用目标筛选模式判断
+            if (!shouldAffectEntity(level, entity, mode, teamService)) {
+                continue;
             }
 
             applyEffects(entity, behavior.getEffects());
         }
+    }
+
+    /**
+     * 判断是否应该对实体施加效果
+     */
+    protected boolean shouldAffectEntity(Level level, LivingEntity entity, 
+                                         TargetFilterMode filterMode, ITeamService teamService) {
+        switch (filterMode) {
+            case ALL_ENTITIES:
+                return true;
+
+            case ALL_PLAYERS:
+                return entity instanceof Player;
+
+            case TEAM_ONLY:
+                return checkEntityInTeam(entity, level, teamService, true);
+
+            case TEAM_AND_ALLIES:
+                return checkEntityInTeam(entity, level, teamService, false);
+
+            case ENEMIES_ONLY:
+                return !checkEntityInTeam(entity, level, teamService, true);
+
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * 检查实体是否在团队中
+     * @param strictTeamOnly 严格模式：只检查团队；非严格：包含盟友
+     */
+    protected boolean checkEntityInTeam(LivingEntity entity, Level level, 
+                                        ITeamService teamService, boolean strictTeamOnly) {
+        // 如果没有记录团队ID，不给任何人生效
+        if (teamId == null) {
+            CallOfWar.LOGGER.debug("Team-restricted banner has no teamId, skipping entity: {}", 
+                entity.getName().getString());
+            return false;
+        }
+
+        // 玩家实体
+        if (entity instanceof Player player) {
+            boolean inTeam = teamService.isPlayerInTeam(player, teamId);
+            CallOfWar.LOGGER.debug("Player {} in team check: {} (banner teamId: {})", 
+                player.getName().getString(), inTeam, teamId);
+            return inTeam;
+        }
+
+        // 非玩家实体：检查主人是否在团队中
+        Optional<UUID> ownerUUID = teamService.getOwnerUUID(entity);
+        if (ownerUUID.isPresent()) {
+            // 检查主人是否在团队中
+            boolean ownerInTeam = teamService.isPlayerUUIDInTeam(teamId, ownerUUID.get());
+            CallOfWar.LOGGER.debug("Entity {} owner {} in team check: {}", 
+                entity.getName().getString(), ownerUUID.get(), ownerInTeam);
+            return ownerInTeam;
+        }
+
+        // 没有主人的实体不享受团队限制战旗效果
+        return false;
     }
 
     /**
@@ -165,8 +274,14 @@ public class BannerBlockEntity extends BlockEntity {
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
         tag.putInt("TickCounter", tickCounter);
+        if (placerUUID != null) {
+            tag.putUUID("PlacerUUID", placerUUID);
+        }
         if (teamId != null) {
             tag.putUUID("TeamId", teamId);
+        }
+        if (filterMode != null) {
+            tag.putString("FilterMode", filterMode.getId());
         }
     }
 
@@ -174,8 +289,14 @@ public class BannerBlockEntity extends BlockEntity {
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
         tickCounter = tag.getInt("TickCounter");
+        if (tag.hasUUID("PlacerUUID")) {
+            placerUUID = tag.getUUID("PlacerUUID");
+        }
         if (tag.hasUUID("TeamId")) {
             teamId = tag.getUUID("TeamId");
+        }
+        if (tag.contains("FilterMode")) {
+            filterMode = TargetFilterMode.fromId(tag.getString("FilterMode"));
         }
     }
 

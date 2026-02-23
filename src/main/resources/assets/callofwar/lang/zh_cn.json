@@ -6,6 +6,7 @@
   "block.callofwar.speed_banner": "速度战旗",
   "block.callofwar.strength_banner": "力量战旗",
   "block.callofwar.resistance_banner": "抗性战旗",
+  "block.callofwar.banner": "战旗",
 
   "callofwar.configuration.title": "战争号角配置",
   "callofwar.configuration.section.callofwar.common.toml": "战争号角配置",
@@ -13,5 +14,15 @@
   "callofwar.configuration.items": "物品列表",
   "callofwar.configuration.logDirtBlock": "记录泥土方块",
   "callofwar.configuration.magicNumberIntroduction": "魔法数字文本",
-  "callofwar.configuration.magicNumber": "魔法数字"
+  "callofwar.configuration.magicNumber": "魔法数字",
+
+  "gui.callofwar.banner.confirm": "确认",
+  "gui.callofwar.banner.filter_mode": "筛选模式",
+  "gui.callofwar.banner.team": "队伍: %s",
+
+  "gui.callofwar.banner.filter.team_only": "仅队伍成员",
+  "gui.callofwar.banner.filter.team_allies": "队伍与盟友",
+  "gui.callofwar.banner.filter.all_players": "所有玩家",
+  "gui.callofwar.banner.filter.all_entities": "所有实体",
+  "gui.callofwar.banner.filter.enemies_only": "仅敌人"
 }

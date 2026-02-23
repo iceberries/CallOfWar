@@ -2,10 +2,13 @@ package com.ice_berry.callofwar.banner;
 
 import javax.annotation.Nullable;
 
+import com.ice_berry.callofwar.banner.gui.BannerMenuProvider;
 import com.mojang.serialization.MapCodec;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -14,6 +17,7 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
 
 /**
  * 战旗方块基类
@@ -73,6 +77,31 @@ public abstract class COWAbstractBannerBlock extends net.minecraft.world.level.b
                 bannerEntity.setPlacer(placer);
             }
         }
+    }
+
+    /**
+     * Shift + 右键打开配置 GUI（仅限放置者）
+     */
+    @Override
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, 
+                                               Player player, BlockHitResult hitResult) {
+        if (!level.isClientSide && player.isShiftKeyDown()) {
+            BlockEntity blockEntity = level.getBlockEntity(pos);
+            if (blockEntity instanceof BannerBlockEntity bannerEntity) {
+                // 只有放置者本人才能打开GUI
+                if (!bannerEntity.isPlacer(player)) {
+                    return InteractionResult.FAIL;
+                }
+                // 打开配置 GUI
+                player.openMenu(new BannerMenuProvider(bannerEntity), buf -> {
+                    buf.writeBlockPos(pos);
+                });
+                return InteractionResult.SUCCESS;
+            }
+        }
+        
+        // 非 shift 或客户端，使用默认行为
+        return super.useWithoutItem(state, level, pos, player, hitResult);
     }
 
     /**

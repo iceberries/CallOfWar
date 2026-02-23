@@ -2,6 +2,8 @@ package com.ice_berry.callofwar.banner;
 
 import java.util.List;
 
+import com.ice_berry.callofwar.banner.team.TargetFilterMode;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
@@ -53,8 +55,18 @@ public interface IBannerBehavior {
 
     /**
      * 是否启用同队限制
+     * @deprecated 使用 {@link #getTargetFilterMode()} 替代
      */
+    @Deprecated
     default boolean isTeamRestricted() {
-        return false;
+        return getTargetFilterMode().requiresTeamCheck();
+    }
+
+    /**
+     * 获取目标筛选模式
+     * @return 目标筛选模式
+     */
+    default TargetFilterMode getTargetFilterMode() {
+        return isTeamRestricted() ? TargetFilterMode.TEAM_ONLY : TargetFilterMode.ALL_PLAYERS;
     }
 }

@@ -3,6 +3,7 @@ package com.ice_berry.callofwar;
 import org.slf4j.Logger;
 
 import com.ice_berry.callofwar.banner.BannerRegistrar;
+import com.ice_berry.callofwar.banner.gui.BannerMenuType;
 import com.mojang.logging.LogUtils;
 
 import net.minecraft.core.registries.Registries;
@@ -49,6 +50,9 @@ public class CallOfWar {
 
         // Register Banner system (static initialization happens on class load)
         BannerRegistrar.registerToEventBus(modEventBus);
+
+        // Register GUI menu types
+        BannerMenuType.register(modEventBus);
 
         // Register ourselves for server and other game events we are interested in.
         // Note that this is necessary if and only if we want *this* class (CallOfWar) to respond directly to events.
