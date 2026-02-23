@@ -2,13 +2,14 @@ package com.ice_berry.callofwar.banner.gui;
 
 import com.ice_berry.callofwar.CallOfWar;
 import com.ice_berry.callofwar.banner.team.TargetFilterMode;
+import com.ice_berry.callofwar.network.BannerConfigPayload;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
  * 战旗配置屏幕
@@ -94,7 +95,13 @@ public class BannerScreen extends AbstractContainerScreen<BannerMenu> {
 
     @Override
     public void onClose() {
-        menu.applyChanges();
+        // 发送网络包到服务端同步配置
+        BannerConfigPayload packet = new BannerConfigPayload(
+            menu.getBlockEntity().getBlockPos(),
+            selectedMode.getId()
+        );
+        PacketDistributor.sendToServer(packet);
+        
         super.onClose();
     }
 
