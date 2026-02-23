@@ -97,7 +97,7 @@ public class BannerScreen extends AbstractContainerScreen<BannerMenu> {
     public void onClose() {
         // 发送网络包到服务端同步配置
         BannerConfigPayload packet = new BannerConfigPayload(
-            menu.getBlockEntity().getBlockPos(),
+            menu.getBlockPos(),
             selectedMode.getId()
         );
         PacketDistributor.sendToServer(packet);

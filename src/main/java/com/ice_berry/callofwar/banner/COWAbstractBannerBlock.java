@@ -3,6 +3,7 @@ package com.ice_berry.callofwar.banner;
 import javax.annotation.Nullable;
 
 import com.ice_berry.callofwar.banner.gui.BannerMenuProvider;
+import com.ice_berry.callofwar.banner.gui.BannerMenu;
 import com.mojang.serialization.MapCodec;
 
 import net.minecraft.core.BlockPos;
@@ -92,9 +93,9 @@ public abstract class COWAbstractBannerBlock extends net.minecraft.world.level.b
                 if (!bannerEntity.isPlacer(player)) {
                     return InteractionResult.FAIL;
                 }
-                // 打开配置 GUI
+                // 打开配置 GUI，同步数据到客户端
                 player.openMenu(new BannerMenuProvider(bannerEntity), buf -> {
-                    buf.writeBlockPos(pos);
+                    BannerMenu.writeData(buf, bannerEntity);
                 });
                 return InteractionResult.SUCCESS;
             }

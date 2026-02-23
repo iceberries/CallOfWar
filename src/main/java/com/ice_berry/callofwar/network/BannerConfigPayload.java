@@ -9,8 +9,9 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 /**
@@ -49,17 +50,20 @@ public record BannerConfigPayload(BlockPos pos, String filterModeId) implements 
         ServerPlayer player = (ServerPlayer) context.player();
         
         context.enqueueWork(() -> {
-            // 验证玩家是否正在操作该战旗的菜单
-            AbstractContainerMenu menu = player.containerMenu;
-            if (menu instanceof com.ice_berry.callofwar.banner.gui.BannerMenu bannerMenu) {
-                BannerBlockEntity blockEntity = bannerMenu.getBlockEntity();
-                
-                // 验证是否是放置者
-                if (blockEntity != null && blockEntity.isPlacer(player)) {
-                    TargetFilterMode mode = TargetFilterMode.fromId(payload.filterModeId());
-                    blockEntity.setFilterMode(mode);
-                    CallOfWar.LOGGER.info("Banner at {} filter mode changed to {} by {}", 
-                        payload.pos(), mode, player.getName().getString());
+            // 从服务端世界获取 BlockEntity（不信任客户端数据）
+            if (player.level() instanceof ServerLevel serverLevel) {
+                BlockEntity be = serverLevel.getBlockEntity(payload.pos());
+                if (be instanceof BannerBlockEntity blockEntity) {
+                    // 验证是否是放置者
+                    if (blockEntity.isPlacer(player)) {
+                        TargetFilterMode mode = TargetFilterMode.fromId(payload.filterModeId());
+                        blockEntity.setFilterMode(mode);
+                        CallOfWar.LOGGER.info("Banner at {} filter mode changed to {} by {}", 
+                            payload.pos(), mode, player.getName().getString());
+                    } else {
+                        CallOfWar.LOGGER.warn("Player {} tried to modify banner at {} but is not the placer", 
+                            player.getName().getString(), payload.pos());
+                    }
                 }
             }
         });
