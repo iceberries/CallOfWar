@@ -24,5 +24,9 @@
   "gui.callofwar.banner.filter.team_allies": "队伍与盟友",
   "gui.callofwar.banner.filter.all_players": "所有玩家",
   "gui.callofwar.banner.filter.all_entities": "所有实体",
-  "gui.callofwar.banner.filter.enemies_only": "仅敌人"
+  "gui.callofwar.banner.filter.enemies_only": "仅敌人",
+
+  "block.callofwar.banner_forge": "战旗工坊",
+  "gui.callofwar.banner_forge": "战旗工坊",
+  "gui.callofwar.banner_forge.insert_banner": "放入战旗"
 }

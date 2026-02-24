@@ -24,5 +24,9 @@
   "gui.callofwar.banner.filter.team_allies": "Team & Allies",
   "gui.callofwar.banner.filter.all_players": "All Players",
   "gui.callofwar.banner.filter.all_entities": "All Entities",
-  "gui.callofwar.banner.filter.enemies_only": "Enemies Only"
+  "gui.callofwar.banner.filter.enemies_only": "Enemies Only",
+
+  "block.callofwar.banner_forge": "Banner Forge",
+  "gui.callofwar.banner_forge": "Banner Forge",
+  "gui.callofwar.banner_forge.insert_banner": "Insert Banner"
 }

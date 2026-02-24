@@ -3,6 +3,7 @@ package com.ice_berry.callofwar;
 import org.slf4j.Logger;
 
 import com.ice_berry.callofwar.banner.BannerRegistrar;
+import com.ice_berry.callofwar.banner.forge.BannerForgeRegistrar;
 import com.ice_berry.callofwar.banner.gui.BannerMenuType;
 import com.mojang.logging.LogUtils;
 
@@ -40,6 +41,8 @@ public class CallOfWar {
                 output.accept(BannerRegistrar.SPEED_BANNER.getBlockSupplier().get().asItem());
                 output.accept(BannerRegistrar.STRENGTH_BANNER.getBlockSupplier().get().asItem());
                 output.accept(BannerRegistrar.RESISTANCE_BANNER.getBlockSupplier().get().asItem());
+                // Add banner forge
+                output.accept(BannerForgeRegistrar.BANNER_FORGE_ITEM.get());
             }).build());
 
     // The constructor for the mod class is the first code that is run when your mod is loaded.
@@ -50,6 +53,9 @@ public class CallOfWar {
 
         // Register Banner system (static initialization happens on class load)
         BannerRegistrar.registerToEventBus(modEventBus);
+
+        // Register Banner Forge
+        BannerForgeRegistrar.registerToEventBus(modEventBus);
 
         // Register GUI menu types
         BannerMenuType.register(modEventBus);
